@@ -1,0 +1,3 @@
+[console_scripts]
+mnist-former-infer = mnist_former.cli_infer:main
+mnist-former-train = mnist_former.cli_train:main

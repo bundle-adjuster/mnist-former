@@ -1,0 +1,24 @@
+{
+  "model": {
+    "image_size": 28,
+    "patch_size": 4,
+    "num_classes": 10,
+    "d_model": 96,
+    "nhead": 4,
+    "n_layers": 2,
+    "dim_feedforward": 192,
+    "dropout": 0.1,
+    "num_patches": 49
+  },
+  "train": {
+    "seed": 42,
+    "epochs": 15,
+    "batch_size": 128,
+    "lr": 0.0003,
+    "weight_decay": 0.01,
+    "val_fraction": 0.1,
+    "num_workers": 2,
+    "log_grad_norm_every": null,
+    "device": "cuda"
+  }
+}

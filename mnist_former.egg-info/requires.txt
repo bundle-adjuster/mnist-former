@@ -1,0 +1,11 @@
+torch>=2.0
+torchvision>=0.15
+tqdm>=4.65
+
+[dev]
+pytest>=7.0
+
+[viz]
+jupyter>=1.0
+matplotlib>=3.7
+seaborn>=0.12

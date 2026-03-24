@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "mnist-former"
+version = "0.1.0"
+description = "Tiny ViT (N=2) on Fashion-MNIST with profiling and notebook visualization"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "tqdm>=4.65",
+]
+
+[project.optional-dependencies]
+viz = [
+    "jupyter>=1.0",
+    "matplotlib>=3.7",
+    "seaborn>=0.12",
+]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.scripts]
+mnist-former-train = "mnist_former.cli_train:main"
+mnist-former-infer = "mnist_former.cli_infer:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mnist_former*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

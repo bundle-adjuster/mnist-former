@@ -1,0 +1,89 @@
+Metadata-Version: 2.4
+Name: mnist-former
+Version: 0.1.0
+Summary: Tiny ViT (N=2) on Fashion-MNIST with profiling and notebook visualization
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: torch>=2.0
+Requires-Dist: torchvision>=0.15
+Requires-Dist: tqdm>=4.65
+Provides-Extra: viz
+Requires-Dist: jupyter>=1.0; extra == "viz"
+Requires-Dist: matplotlib>=3.7; extra == "viz"
+Requires-Dist: seaborn>=0.12; extra == "viz"
+Provides-Extra: dev
+Requires-Dist: pytest>=7.0; extra == "dev"
+
+# MNIST-Former
+
+A small Vision Transformer (default **N=2** encoder blocks) trained on **Fashion-MNIST**, with training and inference separated from visualization. Profiling hooks are optional; analysis lives in Jupyter notebooks that read checkpoints and metrics from disk.
+
+## Install
+
+```bash
+cd mnist-former
+pip install -e .
+```
+
+Training and inference only need the base dependencies (`torch`, `torchvision`, `tqdm`).
+
+For notebooks (plots):
+
+```bash
+pip install -e ".[viz]"
+```
+
+For tests:
+
+```bash
+pip install -e ".[dev]"
+```
+
+## Train
+
+```bash
+python scripts/train.py --output-dir runs/exp1
+```
+
+Optional: profile a short segment and write a Chrome trace under the run directory:
+
+```bash
+python scripts/train.py --output-dir runs/exp1 --profile
+```
+
+Or use the console entry point:
+
+```bash
+mnist-former-train --output-dir runs/exp1
+```
+
+Artifacts:
+
+- `runs/exp1/checkpoints/best.pt` — model weights, configs, epoch
+- `runs/exp1/metrics.jsonl` — one JSON object per epoch (loss, accuracy, etc.)
+
+## Inference
+
+```bash
+python scripts/infer.py --checkpoint runs/exp1/checkpoints/best.pt --split test
+```
+
+```bash
+mnist-former-infer --checkpoint runs/exp1/checkpoints/best.pt --split test
+```
+
+Optional: save predictions to CSV with `--predictions-csv path/to/preds.csv`.
+
+## Notebooks
+
+After installing `[viz]`, open `notebooks/` and set `OUTPUT_DIR` (or equivalent) to your run directory, for example `runs/exp1`.
+
+- `01_training_curves.ipynb` — loss and accuracy from `metrics.jsonl`
+- `02_attention_and_samples.ipynb` — attention maps, sample images, confusion matrix
+- `03_profiler_trace.ipynb` — notes on Chrome traces from `--profile`
+
+## Tests
+
+```bash
+pytest
+```
