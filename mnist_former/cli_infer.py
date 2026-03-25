@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import contextlib
 import csv
 from pathlib import Path
 
@@ -32,48 +33,64 @@ def build_arg_parser() -> argparse.ArgumentParser:
     )
     p.add_argument("--batch-size", type=int, default=128)
     p.add_argument("--seed", type=int, default=42)
+    p.add_argument(
+        "--nvtx",
+        action="store_true",
+        help="Emit NVTX ranges via torch.autograd.profiler.emit_nvtx() (CUDA only; use with Nsight Systems)",
+    )
     return p
 
 
 def main() -> None:
     args = build_arg_parser().parse_args()
     dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if args.nvtx and dev.type != "cuda":
+        raise SystemExit("--nvtx requires CUDA")
+
     model, _, train_config, epoch = load_checkpoint(args.checkpoint, device=dev)
 
     tc = TrainConfig(seed=args.seed, batch_size=args.batch_size)
     _, val_loader, test_loader = get_dataloaders(tc)
     loader = val_loader if args.split == "val" else test_loader
 
-    loss, acc = evaluate_loader(model, loader, dev)
-    print(f"checkpoint_epoch={epoch} split={args.split} loss={loss:.4f} acc={acc:.4f}")
+    nvtx_ctx = (
+        torch.autograd.profiler.emit_nvtx()
+        if args.nvtx
+        else contextlib.nullcontext()
+    )
+    with nvtx_ctx:
+        loss, acc = evaluate_loader(model, loader, dev)
+        print(
+            f"checkpoint_epoch={epoch} split={args.split} loss={loss:.4f} acc={acc:.4f}"
+        )
 
-    if args.predictions_csv:
-        model.eval()
-        rows: list[tuple[int, int, int, float]] = []
-        idx = 0
-        with torch.no_grad():
-            for x, y in loader:
-                x = x.to(dev)
-                y = y.to(dev)
-                pred, probs = predict(model, x, return_probs=True)
-                prob_max = probs.max(dim=-1).values
-                for i in range(x.size(0)):
-                    rows.append(
-                        (
-                            idx,
-                            int(y[i].item()),
-                            int(pred[i].item()),
-                            float(prob_max[i].item()),
+        if args.predictions_csv:
+            model.eval()
+            rows: list[tuple[int, int, int, float]] = []
+            idx = 0
+            with torch.no_grad():
+                for x, y in loader:
+                    x = x.to(dev)
+                    y = y.to(dev)
+                    pred, probs = predict(model, x, return_probs=True)
+                    prob_max = probs.max(dim=-1).values
+                    for i in range(x.size(0)):
+                        rows.append(
+                            (
+                                idx,
+                                int(y[i].item()),
+                                int(pred[i].item()),
+                                float(prob_max[i].item()),
+                            )
                         )
-                    )
-                    idx += 1
-        path = Path(args.predictions_csv)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with path.open("w", newline="", encoding="utf-8") as f:
-            w = csv.writer(f)
-            w.writerow(["index", "label", "pred", "prob_max"])
-            w.writerows(rows)
-        print(f"Wrote {len(rows)} rows to {path.resolve()}")
+                        idx += 1
+            path = Path(args.predictions_csv)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            with path.open("w", newline="", encoding="utf-8") as f:
+                w = csv.writer(f)
+                w.writerow(["index", "label", "pred", "prob_max"])
+                w.writerows(rows)
+            print(f"Wrote {len(rows)} rows to {path.resolve()}")
 
 
 if __name__ == "__main__":

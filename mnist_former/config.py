@@ -37,7 +37,7 @@ class TrainConfig:
     lr: float = 3e-4
     weight_decay: float = 0.01
     val_fraction: float = 0.1
-    num_workers: int = 2
+    num_workers: int = 0
     log_grad_norm_every: int | None = None  # e.g. 50; None disables grad norm logging
     device: str = "cuda"  # or "cpu"; CLI may override
 

@@ -85,6 +85,13 @@ mnist-former-infer --checkpoint runs/exp1/checkpoints/best.pt --split test
 
 Optional: save predictions to CSV with `--predictions-csv path/to/preds.csv`.
 
+Nsight Systems on evaluation (same `--nvtx` idea as training):
+
+```bash
+nsys profile -o runs/nsys_infer --trace=cuda,nvtx,osrt --sample=cpu \
+  python scripts/infer.py --checkpoint runs/exp1/checkpoints/best.pt --split test --nvtx
+```
+
 ## Notebooks
 
 After installing `[viz]`, open `notebooks/` and set `OUTPUT_DIR` (or equivalent) to your run directory, for example `runs/exp1`.
